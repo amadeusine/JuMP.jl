@@ -300,8 +300,11 @@ function build_constraint(
     return build_constraint(_error, zero(AffExpr), set)
 end
 
-function build_constraint(_error::Function, x::Vector{<:AbstractJuMPScalar},
-                          set::MOI.AbstractVectorSet)
+function build_constraint(
+    ::Function,
+    x::AbstractVector{<:AbstractJuMPScalar},
+    set::MOI.AbstractVectorSet,
+)
     return VectorConstraint(x, set)
 end
 function build_constraint(_error::Function, a::Vector{<:Number},
@@ -357,12 +360,18 @@ function build_constraint(_error::Function, expr, lb, ub)
 end
 
 function build_constraint(
-        ::Function, x::Vector{<:AbstractJuMPScalar}, set::MOI.SOS1)
+    ::Function,
+    x::AbstractVector{<:AbstractJuMPScalar},
+    set::MOI.SOS1,
+)
     return VectorConstraint(x, MOI.SOS1{Float64}(set.weights))
 end
 
 function build_constraint(
-        ::Function, x::Vector{<:AbstractJuMPScalar}, set::MOI.SOS2)
+    ::Function,
+    x::AbstractVector{<:AbstractJuMPScalar},
+    set::MOI.SOS2,
+)
     return VectorConstraint(x, MOI.SOS2{Float64}(set.weights))
 end
 
@@ -1191,8 +1200,7 @@ instead of `≤` and the symbol `>=`can be used instead of `≥`)
 The expression `varexpr` can either be
 
 * of the form `varname` creating a scalar real variable of name `varname`;
-* of the form `varname[...]` or `[...]` creating a container of variables (see
-  [Containers in macros](@ref)).
+* of the form `varname[...]` or `[...]` creating a container of variables.
 
 The recognized positional arguments in `args` are the following:
 
@@ -1222,7 +1230,7 @@ The recognized keyword arguments in `kw_args` are the following:
 * `variable_type`: See the "Note for extending the variable macro" section below.
 * `set`: Equivalent to using `varexpr in value` as `expr` where `value` is the
   value of the keyword argument.
-* `container`: Specify the container type, see [Containers in macros](@ref).
+* `container`: Specify the container type.
 
 ## Examples
 
