@@ -243,6 +243,16 @@ function Model(; caching_mode::MOIU.CachingOptimizerMode=MOIU.AUTOMATIC,
     return direct_model(caching_opt)
 end
 
+function AutoModel(factory = nothing)
+    optimizer = factory === nothing ? nothing : MOI.instantiate(factory)
+    caching_opt = MOIU.CachingOptimizer(
+        MOIU.UniversalFallback(MOIU.Model{Float64}()),
+        optimizer;
+        bridge_constraints = true,
+    )
+    return direct_model(caching_opt)
+end
+
 """
     Model(optimizer_factory;
           caching_mode::MOIU.CachingOptimizerMode=MOIU.AUTOMATIC,
