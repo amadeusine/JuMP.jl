@@ -223,64 +223,55 @@ mutable struct Model <: AbstractModel
 end
 
 """
-    Model(; caching_mode::MOIU.CachingOptimizerMode=MOIU.AUTOMATIC)
+    Model(
+        [optimizer_factory];
+        caching_mode::MOIU.CachingOptimizerMode = MOIU.AUTOMATIC,
+        bridge_constraints::Bool = true,
+        auto_bridge::Bool = false,
+    )
 
-Return a new JuMP model without any optimizer; the model is stored the model in
-a cache. The mode of the `CachingOptimizer` storing this cache is
-`caching_mode`. Use [`set_optimizer`](@ref) to set the optimizer before
-calling [`optimize!`](@ref).
-"""
-function Model(; caching_mode::MOIU.CachingOptimizerMode=MOIU.AUTOMATIC,
-                 solver=nothing)
-    if solver !== nothing
-        error("The solver= keyword is no longer available in JuMP 0.19 and " *
-              "later. See the JuMP documentation " *
-              "(https://jump.dev/JuMP.jl/latest/) for latest syntax.")
-    end
-    universal_fallback = MOIU.UniversalFallback(MOIU.Model{Float64}())
-    caching_opt = MOIU.CachingOptimizer(universal_fallback,
-                                        caching_mode)
-    return direct_model(caching_opt)
-end
+Return a new JuMP model build on a `CachingOptimizer` in `caching_mode`.
 
-function AutoModel(factory = nothing)
-    optimizer = factory === nothing ? nothing : MOI.instantiate(factory)
-    cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
-    cache_opt = MOIU.CachingOptimizer(cache, optimizer; auto_bridge = true)
-    return direct_model(cache_opt)
-end
-
-"""
-    Model(optimizer_factory;
-          caching_mode::MOIU.CachingOptimizerMode=MOIU.AUTOMATIC,
-          bridge_constraints::Bool=true)
-
-Return a new JuMP model with the provided optimizer and bridge settings. This
-function is equivalent to:
-```julia
-    model = Model()
-    set_optimizer(model, optimizer_factory,
-                  bridge_constraints=bridge_constraints)
-    return model
-```
 See [`set_optimizer`](@ref) for the description of the `optimizer_factory` and
 `bridge_constraints` arguments.
 
-## Examples
+If `optimizer_factory` is not provided, use [`set_optimizer`](@ref) to set the
+optimizer before calling [`optimize!`](@ref).
 
-The following creates a model with the optimizer set to `Ipopt`:
-```julia
-model = Model(Ipopt.Optimizer)
-```
+If `auto_bridge == true`, the `CachingOptimizer` will automatically add bridges
+to the underlying optimizer only if necessary, and ignore the
+`bridge_constraints` argument.
 """
-function Model(optimizer_factory;
-               bridge_constraints::Bool=true, kwargs...)
-    model = Model(; kwargs...)
-    set_optimizer(model, optimizer_factory,
-                  bridge_constraints=bridge_constraints)
+function Model(
+    optimizer_factory = nothing;
+    caching_mode::MOIU.CachingOptimizerMode = MOIU.AUTOMATIC,
+    bridge_constraints::Bool = true,
+    auto_bridge = false,
+    solver = nothing,
+)
+    if solver !== nothing
+        error(
+            "The solver= keyword is no longer available in JuMP 0.19 and " *
+            "later. See the JuMP documentation " *
+            "(https://jump.dev/JuMP.jl/latest/) for latest syntax.",
+        )
+    end
+    cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    caching_opt = MOIU.CachingOptimizer(
+        cache;
+        mode = caching_mode,
+        auto_bridge = auto_bridge,
+    )
+    model = direct_model(caching_opt)
+    if optimizer_factory !== nothing
+        set_optimizer(
+            model,
+            optimizer_factory,
+            bridge_constraints = !auto_bridge && bridge_constraints
+        )
+    end
     return model
 end
-
 """
     direct_model(backend::MOI.ModelLike)
 
