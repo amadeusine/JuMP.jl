@@ -245,12 +245,9 @@ end
 
 function AutoModel(factory = nothing)
     optimizer = factory === nothing ? nothing : MOI.instantiate(factory)
-    caching_opt = MOIU.CachingOptimizer(
-        MOIU.UniversalFallback(MOIU.Model{Float64}()),
-        optimizer;
-        bridge_constraints = true,
-    )
-    return direct_model(caching_opt)
+    cache = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    cache_opt = MOIU.CachingOptimizer(cache, optimizer; auto_bridge = true)
+    return direct_model(cache_opt)
 end
 
 """
