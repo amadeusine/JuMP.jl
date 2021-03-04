@@ -246,7 +246,7 @@ function Model(
     optimizer_factory = nothing;
     caching_mode::MOIU.CachingOptimizerMode = MOIU.AUTOMATIC,
     bridge_constraints::Bool = true,
-    auto_bridge = false,
+    auto_bridge::Bool = false,
     solver = nothing,
 )
     if solver !== nothing
@@ -272,6 +272,7 @@ function Model(
     end
     return model
 end
+
 """
     direct_model(backend::MOI.ModelLike)
 
